@@ -1,0 +1,70 @@
+---
+title: "Playwright Fundamentals, Part 2: Locators and Assertions"
+description: "The two concepts that determine whether your Playwright suite stays reliable as the app grows: locators and web-first assertions."
+date: "2026-01-26"
+category: "test-automation"
+tags: ["playwright", "testing-fundamentals"]
+series: "playwright-fundamentals"
+seriesOrder: 2
+---
+
+Part 1 covered writing your first test. This time we're going deeper on the
+two things that make Playwright tests either rock-solid or endlessly flaky:
+**locators** and **web-first assertions**.
+
+## Locator priority, in order
+
+Playwright's docs recommend a priority order for finding elements. In
+practice, following it is the single biggest lever on flaky-test rate:
+
+1. `getByRole` — matches how assistive technology sees the page
+2. `getByLabel` — form fields
+3. `getByPlaceholder` — form fields without a label
+4. `getByText` — non-interactive content
+5. `getByTestId` — an escape hatch when nothing semantic is available
+
+```ts
+// Prefer this:
+page.getByRole("button", { name: "Submit order" });
+
+// Over this:
+page.locator(".btn.btn-primary.submit-btn");
+```
+
+The CSS-selector version breaks the moment a designer renames a class. The
+role-based version breaks only if the button's accessible name changes —
+which is a much rarer, and usually intentional, event.
+
+## Why "web-first assertions" matter
+
+```ts
+await expect(page.getByText("Order confirmed")).toBeVisible();
+```
+
+This isn't a snapshot check. Playwright polls the condition until it's true
+or the timeout elapses. Compare that to:
+
+```ts
+const text = await page.getByText("Order confirmed").textContent();
+expect(text).toBe("Order confirmed"); // ❌ no retry - races the UI
+```
+
+The second version reads the DOM once, immediately. If the confirmation
+message takes even 50ms longer to render than usual (a slow API call, a
+CI runner under load), this test fails — not because anything is actually
+broken, but because the assertion had no chance to wait.
+
+## A locator/assertion checklist
+
+- Default to `getByRole`; reach for `getByTestId` only when there's truly
+  no accessible name to hook into.
+- Never call `.textContent()` or `.innerText()` and compare with a plain
+  `expect(x).toBe(y)` — always assert directly on the locator instead.
+- Avoid `page.waitForTimeout()` entirely. If you're tempted to reach for
+  it, there's almost always a specific condition you can assert on instead.
+
+## What's next
+
+[Part 3](/blog/playwright-fundamentals-ci-and-parallelization) covers
+running this suite in CI: parallelization, sharding, and keeping a growing
+test suite fast.

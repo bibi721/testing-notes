@@ -1,0 +1,53 @@
+---
+title: "API Testing Beyond Status Codes"
+description: "A 200 response doesn't mean the API is correct. A practical checklist for what to actually assert on in API tests."
+date: "2026-02-09"
+category: "api-testing"
+tags: ["api-testing", "testing-fundamentals"]
+---
+
+It's easy to write an API test that only checks `expect(response.status).toBe(200)`
+and call it done. That's a real check, but it's a shallow one — plenty of
+genuinely broken responses still return 200.
+
+## What a status-code-only test misses
+
+- A `200` response with an empty body when the client expected an array
+- The correct fields, but the wrong types (`"id": "123"` instead of `"id": 123`)
+- Correct data, but missing pagination metadata the frontend depends on
+- A field silently renamed, breaking every downstream consumer
+
+None of these fail a status-code-only assertion. All of them break a real
+client.
+
+## A more complete assertion checklist
+
+```ts
+const response = await request.get("/api/users/42");
+const body = await response.json();
+
+expect(response.status()).toBe(200);
+expect(response.headers()["content-type"]).toContain("application/json");
+expect(body).toMatchObject({
+  id: 42,
+  email: expect.stringContaining("@"),
+});
+expect(Array.isArray(body.roles)).toBe(true);
+```
+
+This checks status, content type, shape, and a couple of type-level
+assertions — a meaningfully stronger contract than status alone.
+
+## Contract testing for a step further
+
+For APIs with multiple consumers (a mobile app and a web app hitting the
+same backend, for instance), schema-based contract testing catches breaking
+changes even earlier — validating every response against an OpenAPI/JSON
+Schema definition, so a field rename fails CI immediately rather than
+surfacing as a support ticket from a confused mobile team weeks later.
+
+## Takeaway
+
+Status codes are a floor, not a ceiling. If your API tests stop there,
+you're testing that the server responded — not that it responded
+correctly.

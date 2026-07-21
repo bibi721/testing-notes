@@ -1,0 +1,71 @@
+---
+title: "Playwright Fundamentals, Part 3: CI and Parallelization"
+description: "Running a growing Playwright suite in CI without it becoming the slowest step in your pipeline: parallelization, sharding, and caching."
+date: "2026-02-02"
+category: "test-automation"
+tags: ["playwright", "ci-cd"]
+series: "playwright-fundamentals"
+seriesOrder: 3
+---
+
+Parts 1 and 2 covered writing reliable tests. This closes the series with
+the part that matters once your suite has grown past a handful of specs:
+keeping it fast in CI.
+
+## Parallelization is on by default
+
+Playwright runs test files in parallel across worker processes
+automatically:
+
+```ts
+// playwright.config.ts
+export default defineConfig({
+  fullyParallel: true,
+  workers: process.env.CI ? 1 : undefined,
+});
+```
+
+That `workers: 1` in CI looks backwards at first — isn't the whole point to
+parallelize? In practice, many CI runners (including GitHub Actions'
+standard runners) only give you 1–2 real CPU cores, so spinning up more
+Playwright workers than the runner can actually schedule just adds
+scheduling overhead without added throughput. Measure on your own runner
+before assuming more workers is faster.
+
+## Sharding across multiple CI jobs
+
+For a genuinely large suite, sharding splits tests across multiple parallel
+CI _jobs_, which is a different lever than in-process workers:
+
+```yaml
+strategy:
+  matrix:
+    shard: [1, 2, 3, 4]
+steps:
+  - run: npx playwright test --shard=${{ matrix.shard }}/4
+```
+
+Four jobs each running a quarter of the suite finish in roughly a quarter
+of the time — genuine parallelism, bounded by how many runners your CI
+plan allows concurrently.
+
+## Retries: a safety net, not a fix
+
+```ts
+retries: process.env.CI ? 2 : 0,
+```
+
+A retry setting is there to absorb genuine environmental flakiness (a CI
+runner under momentary load, a third-party API hiccup) — it is not a
+substitute for fixing a test that's flaky because of a real race condition
+in how it's written. If a test only passes on retry, that's a signal to
+open the trace viewer and find out why, not to quietly ship a suite that
+"mostly" passes.
+
+## Wrapping up the series
+
+Across these three parts: write tests against the accessibility tree, lean
+on web-first assertions instead of manual polling, and treat CI
+configuration as seriously as the tests themselves. That combination is
+what keeps a Playwright suite trustworthy as it scales from ten tests to a
+thousand.
