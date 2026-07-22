@@ -30,11 +30,26 @@ continues to work for any future primitive.
 | `Sheet`        | `@radix-ui/react-dialog`        | `Header` (mobile nav)                 |
 | `Separator`    | `@radix-ui/react-separator`     | Reserved for content pages (Phase 2+) |
 
-## Content Components
+## Content Components (`src/components/blog/`)
 
-Not yet built — land in Phase 2 alongside the MDX pipeline:
-`PostCard`, `PostHeader`, `TableOfContents`, `RelatedPosts`,
-`SeriesNav`, `CategoryBadge`, `TagList`, `ResourceCard`.
+| Component            | Purpose                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `PostCard`           | Summary card (title, date, reading time, description, category badge) used on the blog index, home page, and every taxonomy page. |
+| `PostHeader`         | Full post metadata block on the post detail page: title, description, dates, reading time, tags.                                  |
+| `MdxContent`         | Renders a post's compiled MDX body via `next-mdx-remote/rsc`, wrapped in `@tailwindcss/typography`'s `.prose` styling.            |
+| `TableOfContents`    | Renders headings extracted server-side by `lib/content/toc.ts` as anchor links.                                                   |
+| `SeriesNav`          | In-post navigation showing all parts of a series and the reader's current position.                                               |
+| `RelatedPosts`       | Links to posts scored by shared category/tags (`getRelatedPosts` in the repository).                                              |
+| `CategoryBadge`      | Small pill linking to a category page. Used by `PostCard`, `PostHeader`, `ResourceCard`.                                          |
+| `TagList`            | List of `#tag` links to tag pages.                                                                                                |
+| `PaginationControls` | Previous/Next controls for the paginated blog index.                                                                              |
+| `TaxonomyPostList`   | Shared list layout for category, tag, and series pages (eyebrow label + title + post list).                                       |
+
+## Resource Components (`src/components/resources/`)
+
+| Component      | Purpose                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| `ResourceCard` | Entry in the Resource Library grid: title (external link), description, pricing badge, category, tags. |
 
 ## Conventions
 

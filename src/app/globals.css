@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -97,4 +98,33 @@
   :focus-visible {
     @apply outline-ring outline-2 outline-offset-2;
   }
+}
+
+/* rehype-pretty-code emits both --shiki-light and --shiki-dark CSS
+   variables per token (dual-theme mode). keepBackground: false in
+   mdx-options.ts means the container background comes from our own
+   Tailwind classes below, not the raw Shiki theme. */
+.shiki span {
+  color: var(--shiki-light);
+}
+.dark .shiki span {
+  color: var(--shiki-dark);
+}
+
+.prose pre {
+  @apply border-border bg-secondary/50 rounded-lg border px-4 py-3;
+}
+
+.prose code {
+  @apply font-mono text-[0.85em];
+}
+
+.prose pre code {
+  @apply border-0 bg-transparent p-0;
+}
+
+/* Inline code (not inside a pre block) gets a subtle pill background;
+   fenced code blocks are excluded via :not(pre) > code. */
+.prose :not(pre) > code {
+  @apply bg-secondary rounded px-1.5 py-0.5 before:content-none after:content-none;
 }
