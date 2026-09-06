@@ -10,29 +10,34 @@ import { z } from "zod";
  * naming the file and field, rather than surfacing as a confusing
  * runtime error or silent `undefined` deep in a page component.
  */
-export const postFrontmatterSchema = z.object({
-  title: z.string().min(1, "title is required"),
-  description: z
-    .string()
-    .min(1, "description is required")
-    .max(200, "description should be under ~200 characters for SEO"),
-  date: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
-    message: "date must be a valid ISO 8601 date string",
-  }),
-  updated: z
-    .string()
-    .refine((val) => !Number.isNaN(Date.parse(val)), {
-      message: "updated must be a valid ISO 8601 date string",
-    })
-    .optional(),
-  category: z.string().min(1, "category is required"),
-  tags: z.array(z.string()).default([]),
-  series: z.string().optional(),
-  seriesOrder: z.number().int().positive().optional(),
-  coverImage: z.string().optional(),
-  draft: z.boolean().default(false),
-  canonicalUrl: z.string().url().optional(),
-});
+export const postFrontmatterSchema = z
+  .object({
+    title: z.string().min(1, "title is required"),
+    description: z
+      .string()
+      .min(1, "description is required")
+      .max(200, "description should be under ~200 characters for SEO"),
+    date: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
+      message: "date must be a valid ISO 8601 date string",
+    }),
+    updated: z
+      .string()
+      .refine((val) => !Number.isNaN(Date.parse(val)), {
+        message: "updated must be a valid ISO 8601 date string",
+      })
+      .optional(),
+    category: z.string().min(1, "category is required"),
+    tags: z.array(z.string()).default([]),
+    series: z.string().optional(),
+    seriesOrder: z.number().int().positive().optional(),
+    coverImage: z.string().optional(),
+    draft: z.boolean().default(false),
+    canonicalUrl: z.string().url().optional(),
+  })
+  .refine((data) => !data.series || data.seriesOrder !== undefined, {
+    message: "seriesOrder is required whenever series is set",
+    path: ["seriesOrder"],
+  });
 
 export type ValidatedPostFrontmatter = z.infer<typeof postFrontmatterSchema>;
 

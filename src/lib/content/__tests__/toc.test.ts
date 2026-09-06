@@ -56,4 +56,27 @@ More content.
   it("returns an empty array for content with no headings", () => {
     expect(extractTableOfContents("Just plain prose.")).toEqual([]);
   });
+
+  it("captures text nested inside inline code, emphasis, and links", () => {
+    // Regression test: a heading like "## Using `getByRole`" has an
+    // inlineCode child alongside the plain "Using " text node. Only
+    // reading direct text children previously produced "Using " as
+    // the label and a slug that didn't match the rendered heading's
+    // actual anchor id.
+    const content = `
+## Using \`getByRole\`
+
+## **Bold** heading
+
+## A [linked](https://example.com) heading
+`;
+    const toc = extractTableOfContents(content);
+
+    expect(toc.map((entry) => entry.text)).toEqual([
+      "Using getByRole",
+      "Bold heading",
+      "A linked heading",
+    ]);
+    expect(toc[0].id).toBe("using-getbyrole");
+  });
 });

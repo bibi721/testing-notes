@@ -2,12 +2,33 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import { visit } from "unist-util-visit";
 import GithubSlugger from "github-slugger";
-import type { Heading, Root, Text } from "mdast";
+import type { Heading, PhrasingContent, Root } from "mdast";
 
 export interface TocEntry {
   id: string;
   text: string;
   depth: 2 | 3;
+}
+
+/**
+ * Recursively collects the plain text of a heading's inline content.
+ * A heading like `## Using \`getByRole\`` has an `inlineCode` child
+ * alongside plain text, and `## **Bold** or [linked](url) text` has
+ * `strong`/`link` children wrapping their own text - all of these
+ * have either a direct `value` (text, inlineCode) or nested
+ * `children` (emphasis, strong, link, delete). Only reading direct
+ * `text` children (the previous implementation) silently drops
+ * everything else, producing a wrong or empty TOC label and a slug
+ * that doesn't match what rehype-slug assigns to the rendered heading.
+ */
+function getPlainText(node: PhrasingContent): string {
+  if ("value" in node && typeof node.value === "string") {
+    return node.value;
+  }
+  if ("children" in node && Array.isArray(node.children)) {
+    return node.children.map(getPlainText).join("");
+  }
+  return "";
 }
 
 /**
@@ -29,10 +50,7 @@ export function extractTableOfContents(rawContent: string): TocEntry[] {
   visit(tree, "heading", (node: Heading) => {
     if (node.depth !== 2 && node.depth !== 3) return;
 
-    const text = node.children
-      .filter((child): child is Text => child.type === "text")
-      .map((child) => child.value)
-      .join("");
+    const text = node.children.map(getPlainText).join("");
 
     if (!text) return;
 

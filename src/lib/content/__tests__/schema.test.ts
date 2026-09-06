@@ -48,6 +48,27 @@ describe("postFrontmatterSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("rejects a series without a seriesOrder", () => {
+    // Regression test: getPostsBySeries() sorts missing orders as 0,
+    // so an unordered post would silently render first instead of
+    // failing the build, contradicting the content guide's documented
+    // requirement that seriesOrder is mandatory when series is set.
+    const result = postFrontmatterSchema.safeParse({
+      ...validPost,
+      series: "some-series",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a series with a seriesOrder", () => {
+    const result = postFrontmatterSchema.safeParse({
+      ...validPost,
+      series: "some-series",
+      seriesOrder: 1,
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("resourceFrontmatterSchema", () => {
