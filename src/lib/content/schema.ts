@@ -1,6 +1,33 @@
 import { z } from "zod";
 
 /**
+ * `Date.parse` is too lenient for frontmatter validation: it silently
+ * normalizes impossible calendar dates instead of rejecting them -
+ * e.g. `Date.parse("2026-02-30")` succeeds and produces March 2nd.
+ * For date-only strings (the format every date field in this project
+ * uses), this checks the parsed UTC year/month/day actually match
+ * what was written, catching a typo'd date before it publishes under
+ * the wrong day.
+ */
+function isValidCalendarDate(value: string): boolean {
+  if (Number.isNaN(Date.parse(value))) return false;
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return true; // Not a plain date-only string; trust Date.parse.
+
+  const [, year, month, day] = match;
+  const date = new Date(value);
+  return (
+    date.getUTCFullYear() === Number(year) &&
+    date.getUTCMonth() + 1 === Number(month) &&
+    date.getUTCDate() === Number(day)
+  );
+}
+
+const isoDateString = (message: string) =>
+  z.string().refine(isValidCalendarDate, { message });
+
+/**
  * Runtime validation for post frontmatter. This is the equivalent
  * safety net Velite would have given us via its build-time schema,
  * but owned as plain code we can evolve without a framework
@@ -17,15 +44,10 @@ export const postFrontmatterSchema = z
       .string()
       .min(1, "description is required")
       .max(200, "description should be under ~200 characters for SEO"),
-    date: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
-      message: "date must be a valid ISO 8601 date string",
-    }),
-    updated: z
-      .string()
-      .refine((val) => !Number.isNaN(Date.parse(val)), {
-        message: "updated must be a valid ISO 8601 date string",
-      })
-      .optional(),
+    date: isoDateString("date must be a valid ISO 8601 calendar date"),
+    updated: isoDateString(
+      "updated must be a valid ISO 8601 calendar date"
+    ).optional(),
     category: z.string().min(1, "category is required"),
     tags: z.array(z.string()).default([]),
     series: z.string().optional(),
@@ -48,9 +70,7 @@ export const resourceFrontmatterSchema = z.object({
   category: z.string().min(1, "category is required"),
   tags: z.array(z.string()).default([]),
   pricing: z.enum(["free", "paid", "freemium"]).optional(),
-  addedDate: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
-    message: "addedDate must be a valid ISO 8601 date string",
-  }),
+  addedDate: isoDateString("addedDate must be a valid ISO 8601 calendar date"),
 });
 
 export type ValidatedResourceFrontmatter = z.infer<

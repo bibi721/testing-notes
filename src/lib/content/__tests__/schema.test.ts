@@ -33,6 +33,33 @@ describe("postFrontmatterSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects a calendar date that doesn't exist", () => {
+    // Regression test: Date.parse("2026-02-30") doesn't throw - it
+    // silently normalizes to March 2nd. A typo'd date should fail
+    // validation instead of publishing under the wrong day.
+    const result = postFrontmatterSchema.safeParse({
+      ...validPost,
+      date: "2026-02-30",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a valid leap day", () => {
+    const result = postFrontmatterSchema.safeParse({
+      ...validPost,
+      date: "2028-02-29",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a non-existent leap day in a non-leap year", () => {
+    const result = postFrontmatterSchema.safeParse({
+      ...validPost,
+      date: "2026-02-29",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects a description over 200 characters", () => {
     const result = postFrontmatterSchema.safeParse({
       ...validPost,
@@ -91,6 +118,17 @@ describe("resourceFrontmatterSchema", () => {
       url: "not-a-url",
       category: "test-automation",
       addedDate: "2026-01-10",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a non-existent calendar date for addedDate", () => {
+    const result = resourceFrontmatterSchema.safeParse({
+      title: "Playwright",
+      description: "E2E testing framework.",
+      url: "https://playwright.dev",
+      category: "test-automation",
+      addedDate: "2026-13-01",
     });
     expect(result.success).toBe(false);
   });

@@ -40,7 +40,14 @@ export default async function PostPage({
   const { slug } = await params;
   const post = await contentRepository.getPostBySlug(slug);
 
-  if (!post || post.draft) {
+  // Drafts are excluded from generateStaticParams and getAllPosts()
+  // by default, but getPostBySlug() still resolves them directly so
+  // they can be reviewed locally before publishing. Only block that
+  // direct access in production - blocking it in dev too would make
+  // the documented draft preview workflow impossible.
+  const isDraftBlocked = post?.draft && process.env.NODE_ENV === "production";
+
+  if (!post || isDraftBlocked) {
     notFound();
   }
 
