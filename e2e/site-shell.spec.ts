@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Site shell", () => {
-  test("home page loads with correct title and nav", async ({ page }) => {
+  test("home page loads with correct title and nav", async ({
+    page,
+  }, testInfo) => {
     await page.goto("/");
 
     await expect(page).toHaveTitle(/Testing Notes/);
@@ -9,8 +11,14 @@ test.describe("Site shell", () => {
       page.getByRole("heading", { level: 1, name: "Testing Notes" })
     ).toBeVisible();
 
-    const nav = page.getByRole("navigation", { name: "Primary" });
-    await expect(nav.getByRole("link", { name: "Blog" })).toBeVisible();
+    // The desktop nav is intentionally hidden below the md breakpoint
+    // (mobile users get the hamburger menu instead - see the
+    // "mobile nav opens via hamburger menu" test below), so this
+    // assertion only makes sense on desktop-sized projects.
+    if (testInfo.project.name !== "mobile-chrome") {
+      const nav = page.getByRole("navigation", { name: "Primary" });
+      await expect(nav.getByRole("link", { name: "Blog" })).toBeVisible();
+    }
   });
 
   test("skip-to-content link is the first focusable element", async ({

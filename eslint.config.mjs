@@ -28,7 +28,7 @@ const eslintConfig = [
       // for this project size; inference is fine and keeps code terse.
       "@typescript-eslint/no-unused-vars": [
         "warn",
-        { argsIgnorePattern: "^_" },
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
     },
   },

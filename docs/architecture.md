@@ -50,12 +50,12 @@ export interface ContentRepository {
 }
 ```
 
-Phase 2 ships `FileSystemContentRepository`, which implements this
-interface by reading `.mdx` files from `/content` and parsing
-frontmatter with `gray-matter`. If a headless CMS (Sanity, Contentful,
-Payload, etc.) is introduced later, it becomes a **second
-implementation of the same interface** — a new file, not a rewrite.
-Every page that currently calls `getAllPosts()` keeps working
+`FileSystemContentRepository` implements this interface by reading
+`.mdx` files from `/content` and parsing frontmatter with
+`gray-matter`, validated against a Zod schema. If a headless CMS
+(Sanity, Contentful, Payload, etc.) is introduced later, it becomes a
+**second implementation of the same interface** — a new file, not a
+rewrite. Every page that currently calls `getAllPosts()` keeps working
 unchanged.
 
 ### Why gray-matter over Velite
@@ -80,6 +80,33 @@ Defined in `src/types/content.ts`:
   (e.g. a multi-part walkthrough).
 - **Resource** — an entry in the Resource Library (tools, links,
   guides), independent of the blog post content model.
+
+## MDX Rendering Pipeline
+
+Post bodies are compiled with `next-mdx-remote/rsc` (`MDXRemote`), a
+Server Component — rendering costs no client-side JavaScript just to
+display text. Shared plugin configuration lives in
+`src/lib/content/mdx-options.ts`:
+
+- `remark-gfm` — GitHub Flavored Markdown (tables, strikethrough, task
+  lists), common in comparison tables of tools/frameworks.
+- `rehype-slug` — adds `id` attributes to headings using
+  `github-slugger`.
+- `rehype-autolink-headings` — wraps heading text in a self-link.
+- `rehype-pretty-code` — Shiki-powered syntax highlighting, computed
+  at build time. Configured with both a light and dark theme
+  (`github-light` / `github-dark`); the resulting dual `--shiki-light`
+  / `--shiki-dark` CSS variables are switched by a plain CSS rule in
+  `globals.css` scoped to `.dark`, so code blocks re-theme instantly
+  with the rest of the site's dark mode — no re-render, no flash.
+
+**Table of contents** is extracted separately, server-side, from the
+_raw_ MDX source (`src/lib/content/toc.ts`) using `unified` +
+`remark-parse` + `unist-util-visit`, with `github-slugger` generating
+the same IDs `rehype-slug` will independently apply to the rendered
+headings. This means the TOC is available before any MDX compilation
+or client JS runs, and its links are guaranteed to match the actual
+rendered anchor IDs without scanning the DOM.
 
 ## Styling & Design System
 

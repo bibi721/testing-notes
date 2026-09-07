@@ -18,6 +18,32 @@
 - [x] GitHub Actions CI (lint, typecheck, test, build, e2e)
 - [x] `/docs` skeleton
 
+## Phase 2 — Content Layer ✅ Complete
+
+- [x] `FileSystemContentRepository`: gray-matter + `next-mdx-remote/rsc`
+      pipeline implementing `ContentRepository`, with injectable content
+      directories for testability
+- [x] Zod schema validation for post and resource frontmatter
+      (`src/lib/content/schema.ts`), fails the build with a clear
+      per-file error message on invalid data
+- [x] Blog index page (`/blog`) with pagination (`?page=N`)
+- [x] Single post page (`/blog/[slug]`) with MDX rendering, Shiki
+      syntax highlighting (dual light/dark theme), table of contents
+- [x] Category pages (`/category/[slug]`)
+- [x] Tag pages (`/tag/[slug]`)
+- [x] Series pages (`/series/[slug]`) and in-post `SeriesNav`
+- [x] Resource Library data model + listing page (`/resources`)
+- [x] Reading time calculation (manual word-count, no dependency)
+- [x] Related posts logic (scored by shared category + tags)
+- [x] Seed content: 6 posts (including a complete 3-part Playwright
+      series across manual-testing, test-automation, api-testing, and
+      career categories) + 5 Resource Library entries
+- [x] Home page updated to show latest posts (Phase 1 placeholder
+      removed)
+- [x] 45 unit tests covering reading time, TOC extraction, frontmatter
+      validation, pagination, and the repository itself (against
+      fixture content, not the real seed posts)
+
 ### Sandbox limitations (confirmed, non-blocking)
 
 Two things can't be fully exercised inside the development sandbox
@@ -32,22 +58,6 @@ unrestricted environments (local dev, CI, Vercel):
 - **Playwright browser binaries** need `cdn.playwright.dev`. The CI
   workflow already runs `pnpm exec playwright install --with-deps`
   before `pnpm test:e2e`, so this resolves automatically in CI.
-
-## Phase 2 — Content Layer (Next)
-
-- [ ] `FileSystemContentRepository`: gray-matter + `next-mdx-remote`
-      pipeline implementing `ContentRepository`
-- [ ] Zod schema validation for post frontmatter
-- [ ] Blog index page (`/blog`) with pagination
-- [ ] Single post page (`/blog/[slug]`) with MDX rendering, code
-      syntax highlighting, table of contents
-- [ ] Category pages (`/category/[slug]`)
-- [ ] Tag pages (`/tag/[slug]`)
-- [ ] Series pages and in-post series navigation
-- [ ] Resource Library data model + listing page (`/resources`)
-- [ ] Reading time calculation
-- [ ] Related posts logic
-- [ ] Seed content (3–5 real posts) to validate the pipeline end to end
 
 ## Phase 3 — Supporting Pages & SEO
 
